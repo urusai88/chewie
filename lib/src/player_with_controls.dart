@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:chewie/src/chewie_player.dart';
@@ -39,15 +40,23 @@ class PlayerWithControls extends StatelessWidget {
                     (targetConstraints.maxWidth / outerConstraints.maxWidth);
               }
 
+              /// https://github.com/flutter/flutter/issues/51250
+              final factor = Platform.isAndroid ? 1.06 : 1.0;
+
               return Center(
                 child: SizedBox(
                   width: targetConstraints.maxWidth,
-                  height: targetConstraints.maxHeight,
+                  height: targetConstraints.maxHeight * factor,
                   child: Stack(
-                    fit: StackFit.expand,
                     children: [
                       chewieController.placeholder ?? Container(),
-                      Center(child: VideoPlayer(model)),
+                      Center(
+                        /// https://github.com/flutter/flutter/issues/51250
+                        child: SizedBox(
+                          height: targetConstraints.maxHeight,
+                          child: VideoPlayer(model),
+                        ),
+                      ),
                       chewieController.overlay ?? Container(),
                       _buildControls(context, chewieController),
                     ],
