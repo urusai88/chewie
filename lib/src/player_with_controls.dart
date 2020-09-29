@@ -27,33 +27,48 @@ class PlayerWithControls extends StatelessWidget {
         builder: (context, model, _) {
           return LayoutBuilder(
             builder: (context, outerConstraints) {
-              BoxConstraints targetConstraints;
+              BoxConstraints targetConstraints, outerBoxConstraints;
 
               if (model.value.size == null) {
                 targetConstraints = BoxConstraints(
                   maxWidth: outerConstraints.maxWidth,
                   maxHeight: outerConstraints.maxWidth / (16 / 9),
                 );
+                outerBoxConstraints = outerConstraints;
               } else {
-                targetConstraints = BoxConstraints.tight(model.value.size);
-                targetConstraints = targetConstraints /
-                    (targetConstraints.maxWidth / outerConstraints.maxWidth);
+                double factor = 1.0;
+
+                if (model.value.aspectRatio > 1) {
+                  factor = model.value.size.width / outerConstraints.maxWidth;
+                } else if (model.value.aspectRatio < 1) {
+                  factor = model.value.size.height / outerConstraints.maxHeight;
+                } else {
+                  factor = model.value.size.width / outerConstraints.maxWidth;
+                }
+
+                targetConstraints =
+                    BoxConstraints.tight(model.value.size / factor);
+                outerBoxConstraints = BoxConstraints.tightFor(
+                  width: outerConstraints.maxWidth,
+                  height: targetConstraints.maxHeight,
+                );
               }
 
               /// https://github.com/flutter/flutter/issues/51250
-              final factor = Platform.isAndroid ? 1.06 : 1.0;
+              final factor = Platform.isAndroid ? 1.035 : 1.0;
 
               return Center(
                 child: SizedBox(
-                  width: targetConstraints.maxWidth,
-                  height: targetConstraints.maxHeight * factor,
+                  width: outerBoxConstraints.maxWidth,
+                  height: outerBoxConstraints.maxHeight,
                   child: Stack(
                     children: [
                       chewieController.placeholder ?? Container(),
                       Center(
                         /// https://github.com/flutter/flutter/issues/51250
                         child: SizedBox(
-                          height: targetConstraints.maxHeight,
+                          height: targetConstraints.maxHeight / factor,
+                          width: targetConstraints.maxWidth,
                           child: VideoPlayer(model),
                         ),
                       ),
