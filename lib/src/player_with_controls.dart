@@ -15,16 +15,7 @@ class PlayerWithControls extends StatelessWidget {
   Widget build(BuildContext context) {
     final ChewieController chewieController = ChewieController.of(context);
 
-    return Center(
-      child: Container(
-        width: MediaQuery.of(context).size.width,
-        child: AspectRatio(
-          aspectRatio:
-              chewieController.aspectRatio ?? _calculateAspectRatio(context),
-          child: _buildPlayerWithControls(chewieController, context),
-        ),
-      ),
-    );
+    return _buildPlayerWithControls(chewieController, context);
   }
 
   Widget _buildPlayerWithControls(
@@ -33,44 +24,39 @@ class PlayerWithControls extends StatelessWidget {
       value: chewieController.videoPlayerController,
       child: Consumer<VideoPlayerController>(
         builder: (context, model, _) {
-          double aspectRatio;
+          return LayoutBuilder(
+            builder: (context, outerConstraints) {
+              BoxConstraints targetConstraints;
 
-          if (model.value.size != null)
-            aspectRatio = model.value.size.aspectRatio;
+              if (model.value.size == null) {
+                targetConstraints = BoxConstraints(
+                  maxWidth: outerConstraints.maxWidth,
+                  maxHeight: outerConstraints.maxWidth / (16 / 9),
+                );
+              } else {
+                targetConstraints = BoxConstraints.tight(model.value.size);
+                targetConstraints = targetConstraints /
+                    (targetConstraints.maxWidth / outerConstraints.maxWidth);
+              }
 
-          return Container(
-            child: Stack(
-              children: <Widget>[
-                chewieController.placeholder ?? Container(),
-                Center(
-                  child: AspectRatio(
-                    aspectRatio: aspectRatio ?? _calculateAspectRatio(context),
-                    child: VideoPlayer(chewieController.videoPlayerController),
+              return Center(
+                child: SizedBox(
+                  width: targetConstraints.maxWidth,
+                  height: targetConstraints.maxHeight,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      chewieController.placeholder ?? Container(),
+                      Center(child: VideoPlayer(model)),
+                      chewieController.overlay ?? Container(),
+                      _buildControls(context, chewieController),
+                    ],
                   ),
                 ),
-                chewieController.overlay ?? Container(),
-                _buildControls(context, chewieController),
-              ],
-            ),
+              );
+            },
           );
         },
-      ),
-    );
-
-    return Container(
-      child: Stack(
-        children: <Widget>[
-          chewieController.placeholder ?? Container(),
-          Center(
-            child: AspectRatio(
-              aspectRatio: chewieController.aspectRatio ??
-                  _calculateAspectRatio(context),
-              child: VideoPlayer(chewieController.videoPlayerController),
-            ),
-          ),
-          chewieController.overlay ?? Container(),
-          _buildControls(context, chewieController),
-        ],
       ),
     );
   }
