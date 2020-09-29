@@ -5,6 +5,7 @@ import 'package:chewie/src/cupertino_controls.dart';
 import 'package:chewie/src/material_controls.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
 class PlayerWithControls extends StatelessWidget {
@@ -26,8 +27,36 @@ class PlayerWithControls extends StatelessWidget {
     );
   }
 
-  Container _buildPlayerWithControls(
+  Widget _buildPlayerWithControls(
       ChewieController chewieController, BuildContext context) {
+    return ChangeNotifierProvider.value(
+      value: chewieController.videoPlayerController,
+      child: Consumer<VideoPlayerController>(
+        builder: (context, model, _) {
+          double aspectRatio;
+
+          if (model.value.size != null)
+            aspectRatio = model.value.size.aspectRatio;
+
+          return Container(
+            child: Stack(
+              children: <Widget>[
+                chewieController.placeholder ?? Container(),
+                Center(
+                  child: AspectRatio(
+                    aspectRatio: aspectRatio ?? _calculateAspectRatio(context),
+                    child: VideoPlayer(chewieController.videoPlayerController),
+                  ),
+                ),
+                chewieController.overlay ?? Container(),
+                _buildControls(context, chewieController),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
     return Container(
       child: Stack(
         children: <Widget>[
